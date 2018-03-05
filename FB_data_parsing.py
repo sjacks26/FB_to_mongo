@@ -18,12 +18,14 @@ import os
 from dateutil.parser import parse
 import pymongo
 from bson import json_util
+from pymongo import errors
 
 mongoClient = pymongo.MongoClient()
+try:
+    mongoClient.admin.authenticate("", "")
+except errors.OperationFailure:
+    pass
 db = mongoClient.test_March2018
-"""
-Need to add code for credentialed mongo.
-"""
 
 # candidate_names should be a dictionary. Keys are FB id integers, values are candidate names as we want them to appear in Mongo.
 # It might make sense to get this info from somewhere else. I'm not sure.

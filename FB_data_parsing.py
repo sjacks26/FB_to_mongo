@@ -150,10 +150,10 @@ def process(file):
 
 # The following is used to test
 
-# test_file = '/Users/samjackson/facebook-page-scraper/test/download/2018-02-23/2018-02-23_21-46-16_10156351536752708_567401843625629_comment_replies.json'
+# test_file = ''
 # process(test_file)
 
-startdir = '/Users/samjackson/facebook-page-scraper/test/download/2018-02-23/'
+startdir = ''
 file_list = os.listdir(startdir)
 file_list = [startdir + f for f in file_list]
 

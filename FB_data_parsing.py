@@ -31,10 +31,6 @@ candidate_names = {
     58736997707: "Marco Rubio"
 }
 
-"""
-Functions need key error exception handling.
-"""
-
 
 def parse_page(self):
     self = self.replace('\n', ' ')
@@ -45,8 +41,8 @@ def parse_page(self):
         'user_name': data['username'],
         'name': data['name'],
         'page_link': data['link'],
-        'fan_count': data['fan_count'],
-        'talking_about_count': data['talking_about_count']                           # need a timestamp here
+        'fan_count': data['fan_count'] if 'fan_count' in data else 0,
+        'talking_about_count': data['talking_about_count'] if 'talking_about_count' in data else 0  # need a timestamp here
     }
     page_data.append(good_json)
     return page_data
@@ -62,10 +58,10 @@ def parse_post(self):
         'post_id': data['id'],
         'created_time': data['created_time'],
         'created_ts': parse(data['created_time']),
-        'message_text': data['message'],
-        'comment_count': data['comments']['summary']['total_count'],
-        'likes_count': data['likes']['summary']['total_count'],
-        'share_count': data['shares']['count'],
+        'message_text': data['message'] if 'message' in data else '',
+        'comment_count': data['comments']['summary']['total_count'] if 'comments' in data else 0,
+        'likes_count': data['likes']['summary']['total_count'] if 'likes' in data else 0,
+        'share_count': data['shares']['count'] if 'shares' in data else 0,
         'updated_time': data['updated_time'],
         'updated_ts': parse(data['updated_time'])
     }
@@ -83,7 +79,7 @@ def parse_comments(self, filename):
             'comment_id': c['id'],
             'post_id': c['id'].split('_')[0],
             'candidate_name': candidate_name,
-            'comment_like_count': c['like_count'],
+            'comment_like_count': c['like_count'] if 'like_count' in c else 0,
             'comment_text': c['message'],
             'created_time': c['created_time'],
             'created_ts': parse(c['created_time'])
@@ -103,7 +99,7 @@ def parse_replies(self, filename):
             'post_id': r['id'].split('_')[0],
             #'candidate_name': ,                        # I'm not sure what the best way is to get the candidate name for this
             'reply_to': reply_to,
-            'comment_link_count': r['like_count'],
+            'comment_link_count': r['like_count'] if 'like_count' in r else 0,
             'comment_text': r['message'],
             'created_time': r['created_time'],
             'created_ts': parse(r['created_time'])
@@ -122,16 +118,16 @@ def parse_file(file):
     filename = os.path.basename(file)
     if 'page' in filename:
         processed_data = parse_page(raw_data)
-        insertDB = db.page
+        insertDB = db.pages
     elif 'post' in filename and 'comments' not in filename:
         processed_data = parse_post(raw_data)
-        insertDB = db.post
+        insertDB = db.posts
     elif 'replies' in filename:
         processed_data = parse_replies(raw_data, filename=filename)
-        insertDB = db.comment
+        insertDB = db.comments
     elif 'comments' in filename:
         processed_data = parse_comments(raw_data, filename=filename)
-        insertDB = db.comment
+        insertDB = db.comments
     return processed_data, insertDB
 
 
@@ -159,6 +155,6 @@ startdir = '/Users/samjackson/facebook-page-scraper/test/download/2018-02-23/'
 file_list = os.listdir(startdir)
 file_list = [startdir + f for f in file_list]
 
-for f in file_list[:50]:
-    print(f)
-    process(f)
+for f in file_list:
+    if not "_processed" in f:
+        process(f)

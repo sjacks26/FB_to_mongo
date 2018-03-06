@@ -34,17 +34,20 @@ candidate_names = {
 }
 
 
-def parse_page(self):
+def parse_page(self, filename):
     self = self.replace('\n', ' ')
     data = json.loads(self)
     page_data = []
+    ts_from_filename = ' '.join([filename.split("_")[0], filename.split("_")[1].replace("-", ":")])
+    tzinfos = {"UTC": +00000}
     good_json = {
         'page_id': data['id'],
         'user_name': data['username'],
         'name': data['name'],
         'page_link': data['link'],
         'fan_count': data['fan_count'] if 'fan_count' in data else 0,
-        'talking_about_count': data['talking_about_count'] if 'talking_about_count' in data else 0  # need a timestamp here
+        'talking_about_count': data['talking_about_count'] if 'talking_about_count' in data else 0,
+        'updated_time': parse(ts_from_filename, tzinfos=tzinfos)           # This pulls the timestamp from the filename
     }
     page_data.append(good_json)
     return page_data
@@ -119,7 +122,7 @@ def parse_file(file):
         raw_data = f.read()
     filename = os.path.basename(file)
     if 'page' in filename:
-        processed_data = parse_page(raw_data)
+        processed_data = parse_page(raw_data, filename=filename)
         insertDB = db.pages
     elif 'post' in filename and 'comments' not in filename:
         processed_data = parse_post(raw_data)
@@ -150,9 +153,10 @@ def process(file):
 
 # The following is used to test
 
-# test_file = '/Users/samjackson/facebook-page-scraper/test/download/2018-02-23/2018-02-23_21-46-16_10156351536752708_567401843625629_comment_replies.json'
-# process(test_file)
+test_file = '/Users/samjackson/facebook-page-scraper/test/download/2018-03-06/2018-03-06_21-51-03_58736997707_page.json'
+process(test_file)
 
+'''
 startdir = '/Users/samjackson/facebook-page-scraper/test/download/2018-02-23/'
 file_list = os.listdir(startdir)
 file_list = [startdir + f for f in file_list]
@@ -160,3 +164,4 @@ file_list = [startdir + f for f in file_list]
 for f in file_list:
     if not "_processed" in f:
         process(f)
+'''

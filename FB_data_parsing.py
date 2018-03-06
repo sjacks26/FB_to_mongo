@@ -153,11 +153,11 @@ def process(file):
 
 # The following is used to test
 
-test_file = '/Users/samjackson/facebook-page-scraper/test/download/2018-03-06/2018-03-06_21-51-03_58736997707_page.json'
+test_file = ''
 process(test_file)
 
 '''
-startdir = '/Users/samjackson/facebook-page-scraper/test/download/2018-02-23/'
+startdir = ''
 file_list = os.listdir(startdir)
 file_list = [startdir + f for f in file_list]
 

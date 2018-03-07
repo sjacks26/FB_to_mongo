@@ -123,16 +123,16 @@ def parse_file(file):
     filename = os.path.basename(file)
     if 'page' in filename:
         processed_data = parse_page(raw_data, filename=filename)
-        insertDB = db.pages
+        insertDB = db.FB_cand_page_crawl_history
     elif 'post' in filename and 'comments' not in filename:
         processed_data = parse_post(raw_data)
-        insertDB = db.posts
+        insertDB = db.FB_cand_post
     elif 'replies' in filename:
         processed_data = parse_replies(raw_data, filename=filename)
-        insertDB = db.comments
+        insertDB = db.FB_public
     elif 'comments' in filename:
         processed_data = parse_comments(raw_data, filename=filename)
-        insertDB = db.comments
+        insertDB = db.FB_public
     return processed_data, insertDB
 
 

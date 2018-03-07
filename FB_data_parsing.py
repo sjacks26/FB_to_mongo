@@ -47,7 +47,7 @@ def parse_page(self, filename):
         'page_link': data['link'],
         'fan_count': data['fan_count'] if 'fan_count' in data else 0,
         'talking_about_count': data['talking_about_count'] if 'talking_about_count' in data else 0,
-        'updated_time': parse(ts_from_filename, tzinfos=tzinfos)           # This pulls the timestamp from the filename
+        'updated_ts': parse(ts_from_filename, tzinfos=tzinfos)           # This pulls the timestamp from the filename
     }
     page_data.append(good_json)
     return page_data
@@ -65,7 +65,7 @@ def parse_post(self):
         'created_ts': parse(data['created_time']),
         'message_text': data['message'] if 'message' in data else '',
         'comment_count': data['comments']['summary']['total_count'] if 'comments' in data else 0,
-        'likes_count': data['likes']['summary']['total_count'] if 'likes' in data else 0,
+        'like_count': data['likes']['summary']['total_count'] if 'likes' in data else 0,
         'share_count': data['shares']['count'] if 'shares' in data else 0,
         'updated_time': data['updated_time'],
         'updated_ts': parse(data['updated_time'])
@@ -77,6 +77,8 @@ def parse_post(self):
 def parse_comments(self, filename):
     self = self.replace('\n', ' ')
     data = json.loads(self)
+    ts_from_filename = ' '.join([filename.split("_")[0], filename.split("_")[1].replace("-", ":")])
+    tzinfos = {"UTC": +00000}
     comment_list = []
     candidate_name = candidate_names[int(filename.split('_')[2])]
     for c in data['data']:
@@ -87,7 +89,8 @@ def parse_comments(self, filename):
             'comment_like_count': c['like_count'] if 'like_count' in c else 0,
             'comment_text': c['message'],
             'created_time': c['created_time'],
-            'created_ts': parse(c['created_time'])
+            'created_ts': parse(c['created_time']),
+            'updated_ts': parse(ts_from_filename, tzinfos=tzinfos)  # This pulls the timestamp from the filename)
         }
         comment_list.append(good_c)
     return comment_list
@@ -96,6 +99,8 @@ def parse_comments(self, filename):
 def parse_replies(self, filename):
     self = self.replace('\n', ' ')
     data = json.loads(self)
+    ts_from_filename = ' '.join([filename.split("_")[0], filename.split("_")[1].replace("-", ":")])
+    tzinfos = {"UTC": +00000}
     replies_list = []
     reply_to = '_'.join(filename.split('_')[2:4])
     for r in data['data']:
@@ -104,10 +109,11 @@ def parse_replies(self, filename):
             'post_id': r['id'].split('_')[0],
             #'candidate_name': ,                        # I'm not sure what the best way is to get the candidate name for this
             'reply_to': reply_to,
-            'comment_link_count': r['like_count'] if 'like_count' in r else 0,
+            'comment_like_count': r['like_count'] if 'like_count' in r else 0,
             'comment_text': r['message'],
             'created_time': r['created_time'],
-            'created_ts': parse(r['created_time'])
+            'created_ts': parse(r['created_time']),
+            'updated_ts': parse(ts_from_filename, tzinfos=tzinfos)  # This pulls the timestamp from the filename)
         }
         replies_list.append(good_r)
     return replies_list
@@ -124,36 +130,87 @@ def parse_file(file):
     if 'page' in filename:
         processed_data = parse_page(raw_data, filename=filename)
         insertDB = db.FB_cand_page_crawl_history
+        insert = insert_page
     elif 'post' in filename and 'comments' not in filename:
         processed_data = parse_post(raw_data)
-        insertDB = db.FB_cand_post
+        insertDB = (db.FB_cand_post, db.FB_cand_post_crawl_history)
+        insert = insert_post
     elif 'replies' in filename:
         processed_data = parse_replies(raw_data, filename=filename)
         insertDB = db.FB_public
+        insert = insert_replies
     elif 'comments' in filename:
         processed_data = parse_comments(raw_data, filename=filename)
         insertDB = db.FB_public
-    return processed_data, insertDB
+        insert = insert_comments
+    return processed_data, insertDB, insert
+
+
+def insert_page(processed_data, insertDB):
+    insertDB.insert_many(processed_data)
+
+
+def insert_post(processed_data, insertDB, historyDB):
+    for post in processed_data:
+        historyDB.insert_one(post)
+        isExist = insertDB.find_one({'post_id': post['post_id']})
+        if isExist is None:
+            insertDB.insert_one(post)
+        else:
+            insertDB.update_one({'post_id': post['post_id']},
+                            {'$set': {'comment_count': post['comment_count'],
+                                       'like_count': post['like_count'],
+                                       'share_count': post['share_count'],
+                                       'updated_time': post['updated_time'],
+                                       'updated_ts': post['updated_ts']}}, upsert=True)
+
+
+def insert_replies(processed_data, insertDB):
+    for reply in processed_data:
+        isExist = insertDB.find_one({'comment_id': reply['comment_id']})
+        if isExist is None:
+            insertDB.insert_one(reply)
+        else:
+            insertDB.update_one({'comment_id': reply['comment_id']},
+                             {'$set': {'comment_like_count': reply['comment_like_count'],
+                                       'updated_ts': reply['updated_ts']}}, upsert=True)
+
+
+def insert_comments(processed_data, insertDB):
+    for comment in processed_data:
+        isExist = insertDB.find_one({'comment_id': comment['comment_id']})
+        if isExist is None:
+            insertDB.insert_one(comment)
+        else:
+            insertDB.update_one({'comment_id': comment['comment_id']},
+                             {'$set': {'comment_like_count': comment['comment_like_count'],
+                                       'updated_ts': comment['updated_ts']}}, upsert=True)
 
 
 def write_and_insert_processed_data(file):
-    processed_data, insertDB = parse_file(file)
+    processed_data, insertDB, insert = parse_file(file)
     new_filename = file.replace(".json", "_processed.json")
     with open(new_filename, 'w') as o:
         for l in processed_data:
             t = json.dumps(l, default=json_util.default)
             o.write(t + "\n")
     print("Wrote processed data to " + new_filename)
-    insertDB.insert_many(processed_data)
-    print("Inserted " + str(len(processed_data)) + " records to " + insertDB.full_name)
+    #insertDB.insert_many(processed_data)
+    try:
+        insert(processed_data, insertDB)
+        print("Inserted " + str(len(processed_data)) + " records to " + insertDB.full_name)
+    except TypeError:
+        insert(processed_data, insertDB[0], insertDB[1])
+        print("Inserted " + str(len(processed_data)) + " records to " + insertDB[1].full_name)
 
 
 def process(file):
     write_and_insert_processed_data(file)
 
+
 # The following is used to test
 
-test_file = '/Users/samjackson/facebook-page-scraper/test/download/2018-03-06/2018-03-06_21-51-03_58736997707_page.json'
+test_file = '/Users/samjackson/facebook-page-scraper/test/download/2018-03-06/2018-03-06_21-43-01_10156388638492708_10156389157747708_comment_replies.json'
 process(test_file)
 
 '''

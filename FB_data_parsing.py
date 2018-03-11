@@ -41,7 +41,7 @@ def parse_page(self, filename):
     ts_from_filename = ' '.join([filename.split("_")[0], filename.split("_")[1].replace("-", ":")])
     tzinfos = {"UTC": +00000}
     good_json = {
-        'page_id': data['id'],
+        'page_id': int(data['id']),         # This gives a unique integer we can index on
         'user_name': data['username'],
         'name': data['name'],
         'page_link': data['link'],
@@ -61,6 +61,7 @@ def parse_post(self):
     good_json = {
         'candidate_name': candidate_names[cand_id],
         'post_id': data['id'],
+        'post_id_int': int(data['id'].split('_')[1]),         # This gives a unique integer we can index on
         'created_time': data['created_time'],
         'created_ts': parse(data['created_time']),
         'message_text': data['message'] if 'message' in data else '',
@@ -84,7 +85,8 @@ def parse_comments(self, filename):
     for c in data['data']:
         good_c = {
             'comment_id': c['id'],
-            'post_id': c['id'].split('_')[0],
+            'post_id': int(c['id'].split('_')[0]),
+            'comment_id_int': int(c['id'].split('_')[1]),         # This gives a unique integer we can index on
             'candidate_name': candidate_name,
             'comment_like_count': c['like_count'] if 'like_count' in c else 0,
             'comment_text': c['message'],
@@ -106,7 +108,8 @@ def parse_replies(self, filename):
     for r in data['data']:
         good_r = {
             'comment_id': r['id'],
-            'post_id': r['id'].split('_')[0],
+            'post_id': int(r['id'].split('_')[0]),
+            'comment_id_int': int(c['id'].split('_')[1]),         # This gives a unique integer we can index on
             #'candidate_name': ,                        # I'm not sure what the best way is to get the candidate name for this
             'reply_to': reply_to,
             'comment_like_count': r['like_count'] if 'like_count' in r else 0,
@@ -195,7 +198,6 @@ def write_and_insert_processed_data(file):
             t = json.dumps(l, default=json_util.default)
             o.write(t + "\n")
     print("Wrote processed data to " + new_filename)
-    #insertDB.insert_many(processed_data)
     try:
         insert(processed_data, insertDB)
         print("Inserted " + str(len(processed_data)) + " records to " + insertDB.full_name)
@@ -212,7 +214,6 @@ def process(file):
 
 test_file = ''
 process(test_file)
-
 '''
 startdir = ''
 file_list = os.listdir(startdir)

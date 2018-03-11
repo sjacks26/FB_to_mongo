@@ -41,7 +41,7 @@ def parse_page(self, filename):
     ts_from_filename = ' '.join([filename.split("_")[0], filename.split("_")[1].replace("-", ":")])
     tzinfos = {"UTC": +00000}
     good_json = {
-        'page_id': data['id'],
+        'page_id': int(data['id']),         # This gives a unique integer we can index on
         'user_name': data['username'],
         'name': data['name'],
         'page_link': data['link'],
@@ -61,6 +61,7 @@ def parse_post(self):
     good_json = {
         'candidate_name': candidate_names[cand_id],
         'post_id': data['id'],
+        'post_id_int': int(data['id'].split('_')[1]),         # This gives a unique integer we can index on
         'created_time': data['created_time'],
         'created_ts': parse(data['created_time']),
         'message_text': data['message'] if 'message' in data else '',
@@ -84,7 +85,8 @@ def parse_comments(self, filename):
     for c in data['data']:
         good_c = {
             'comment_id': c['id'],
-            'post_id': c['id'].split('_')[0],
+            'post_id': int(c['id'].split('_')[0]),
+            'comment_id_int': int(c['id'].split('_')[1]),         # This gives a unique integer we can index on
             'candidate_name': candidate_name,
             'comment_like_count': c['like_count'] if 'like_count' in c else 0,
             'comment_text': c['message'],
@@ -106,7 +108,8 @@ def parse_replies(self, filename):
     for r in data['data']:
         good_r = {
             'comment_id': r['id'],
-            'post_id': r['id'].split('_')[0],
+            'post_id': int(r['id'].split('_')[0]),
+            'comment_id_int': int(c['id'].split('_')[1]),         # This gives a unique integer we can index on
             #'candidate_name': ,                        # I'm not sure what the best way is to get the candidate name for this
             'reply_to': reply_to,
             'comment_like_count': r['like_count'] if 'like_count' in r else 0,
@@ -210,10 +213,10 @@ def process(file):
 
 # The following is used to test
 
-test_file = '/Users/samjackson/facebook-page-scraper/test/download/2018-03-06/2018-03-06_21-43-01_10156388638492708_10156389157747708_comment_replies.json'
-process(test_file)
+#test_file = '/Users/samjackson/facebook-page-scraper/test/download/2018-03-06/2018-03-06_21-43-01_10156388638492708_10156389157747708_comment_replies.json'
+#process(test_file)
 
-'''
+
 startdir = '/Users/samjackson/facebook-page-scraper/test/download/2018-02-23/'
 file_list = os.listdir(startdir)
 file_list = [startdir + f for f in file_list]
@@ -221,4 +224,4 @@ file_list = [startdir + f for f in file_list]
 for f in file_list:
     if not "_processed" in f:
         process(f)
-'''
+

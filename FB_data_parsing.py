@@ -109,7 +109,7 @@ def parse_replies(self, filename):
         good_r = {
             'comment_id': r['id'],
             'post_id': int(r['id'].split('_')[0]),
-            'comment_id_int': int(c['id'].split('_')[1]),         # This gives a unique integer we can index on
+            'comment_id_int': int(r['id'].split('_')[1]),         # This gives a unique integer we can index on
             #'candidate_name': ,                        # I'm not sure what the best way is to get the candidate name for this
             'reply_to': reply_to,
             'comment_like_count': r['like_count'] if 'like_count' in r else 0,

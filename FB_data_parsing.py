@@ -1,5 +1,4 @@
 '''
-Author: Sam Jackson (sjackson@syr.edu)
 This script opens a single json file containing the raw data returned by the FB Graph API.
 It determine what kind of data the file contains based on the filename (i.e., page data, post data, comments data, or replies data).
 It then parses that data according to the template as defined in the functions below.

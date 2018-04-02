@@ -205,9 +205,6 @@ def write_and_insert_processed_data(file):
         insert(processed_data, insertDB[0], insertDB[1])
         print("Inserted " + str(len(processed_data)) + " records to " + insertDB[1].full_name)
 
-
-def process(file):
-    write_and_insert_processed_data(file)
   
 def process(root_dirc):
     dirc = root_dirc + "download/"

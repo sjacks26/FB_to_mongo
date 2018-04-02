@@ -8,8 +8,6 @@ Once the contents of the input file have been processed, they are simultaneously
  The db they are written to is specified at the top of the script. The collection they are written to is determined by
   the type of file (i.e., pages, posts, and comments/replies)
 
-Sample use:
-process(test_file)
 '''
 
 import json

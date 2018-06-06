@@ -24,6 +24,8 @@ except errors.OperationFailure:
     pass
 db = mongoClient.test_March2018
 
+base_dirc = ''
+
 # candidate_names should be a dictionary. Keys are FB id integers, values are candidate names as we want them to appear in Mongo.
 # It might make sense to get this info from somewhere else. I'm not sure.
 candidate_names = {
@@ -204,16 +206,16 @@ def write_and_insert_processed_data(file):
 
   
 def process(root_dirc):
-    dirc = root_dirc + "download/"
+    dirc = os.path.join(root_dirc, "download")
     for root, dirs, files in os.walk(dirc):
         for file in files:
-            filename = root+"/"+file
+            filename = os.path.join(root,file)
             t = time.time() - 30 * 60
             if os.path.getatime(filename) < t:
                 new_filename = root_dirc+"processed/"+file
                 new_filename = new_filename.replace(".json", "_processed.json")
                 write_and_insert_processed_data(filename,new_filename)
-                raw_filename = root_dirc+"raw/"+file
+                raw_filename = os.path.join(root_dirc,"raw",file)
                 os.rename(filename, raw_filename)
                
                
@@ -224,18 +226,4 @@ def run_timeline(base_dirc):
         time.sleep(60 * 60)
 
 
-# The following is used to test
-
-#Need to create folders "raw" and "processed" in this base directory which has "download" folder with all the original files
-base_dirc = ''
 run_timeline(base_dirc)
-
-'''
-startdir = ''
-file_list = os.listdir(startdir)
-file_list = [startdir + f for f in file_list]
-
-for f in file_list:
-    if not "_processed" in f:
-        process(f)
-'''

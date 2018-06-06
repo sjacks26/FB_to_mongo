@@ -213,9 +213,9 @@ def process(root_dirc):
             filename = os.path.join(root,file)
             t = time.time() - 30 * 60
             if os.path.getatime(filename) < t:
-                new_filename = root_dirc+"processed/"+file
-                new_filename = new_filename.replace(".json", "_processed.json")
-                write_and_insert_processed_data(filename,new_filename)
+                #new_filename = root_dirc+"processed/"+file
+                #new_filename = new_filename.replace(".json", "_processed.json")
+                write_and_insert_processed_data(filename)
                 raw_filename = os.path.join(root_dirc,"raw",file)
                 os.rename(filename, raw_filename)
                

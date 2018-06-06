@@ -16,6 +16,7 @@ from dateutil.parser import parse
 import pymongo
 from bson import json_util
 from pymongo import errors
+import time
 
 mongoClient = pymongo.MongoClient()
 try:

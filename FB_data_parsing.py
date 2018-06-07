@@ -222,6 +222,7 @@ def process(root_dirc):
                
 def run_timeline(base_dirc):
     while True:
+        os.makedirs(os.path.join(base_dirc,"raw"), exist_ok=True)
         process(base_dirc)
         print('Job completed. Resuming in an hour.')
         time.sleep(60 * 60)

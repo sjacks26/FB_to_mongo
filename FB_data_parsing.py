@@ -19,7 +19,7 @@ from pymongo import errors
 
 mongoClient = pymongo.MongoClient()
 try:
-    mongoClient.admin.authenticate("", "")
+    mongoClient.admin.authenticate("bitslab", "0rang3!")
 except errors.OperationFailure:
     pass
 db = mongoClient.test_March2018
@@ -227,7 +227,7 @@ def run_timeline(base_dirc):
 # The following is used to test
 
 #Need to create folders "raw" and "processed" in this base directory which has "download" folder with all the original files
-base_dirc = ''
+base_dirc = '/home/bits/fb-data-collector/'
 run_timeline(base_dirc)
 
 '''

@@ -17,21 +17,27 @@ import pymongo
 from bson import json_util
 from pymongo import errors
 import time
+import config as cfg
 
 mongoClient = pymongo.MongoClient()
-try:
-    mongoClient.admin.authenticate("bitslab", "0rang3!")
-except errors.OperationFailure:
-    pass
-db = mongoClient.test_March2018
+if cfg.mongo_auth['AUTH']:
+    mongoClient.admin.authenticate(cfg.mongo_auth['username'],cfg.mongo_auth['password'])
+db = mongoClient[cfg.mongo_auth['db_name']]
 
-base_dirc = ''
+base_dirc = cfg.base_dirc
 
-# candidate_names should be a dictionary. Keys are FB id integers, values are candidate names as we want them to appear in Mongo.
-# It might make sense to get this info from somewhere else. I'm not sure.
-candidate_names = {
-    58736997707: "Marco Rubio"
-}
+
+def get_candidate_names():
+    candidate_info_json_file = cfg.candidate_info_json_file
+    candidate_names = {}
+    with open(candidate_info_json_file, 'r') as i:
+        candidate_info = i.readlines()
+    candidate_info = [f.strip() for f in candidate_info]
+    for f in candidate_info:
+        f = f.split(': ')
+        candidate_names[int(f[0])] = f[1]
+
+    return candidate_names
 
 
 def parse_page(self, filename):
@@ -213,8 +219,6 @@ def process(root_dirc):
             filename = os.path.join(root,file)
             t = time.time() - 30 * 60
             if os.path.getatime(filename) < t:
-                #new_filename = root_dirc+"processed/"+file
-                #new_filename = new_filename.replace(".json", "_processed.json")
                 write_and_insert_processed_data(filename)
                 raw_filename = os.path.join(root_dirc,"raw",file)
                 os.rename(filename, raw_filename)
@@ -228,4 +232,5 @@ def run_timeline(base_dirc):
         time.sleep(60 * 60)
 
 
+candidate_names = get_candidate_names()
 run_timeline(base_dirc)

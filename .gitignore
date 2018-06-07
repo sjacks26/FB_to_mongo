@@ -35,3 +35,9 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# User specified #
+##################
+config.py
+candidate_info.json
+__pycache__/

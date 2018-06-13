@@ -237,7 +237,7 @@ def process(root_dirc):
         for file in files:
             filename = os.path.join(root,file)
             t = time.time() - 30 * 60
-            if os.path.getatime(filename) < t and not 'processed' in filename:
+            if os.path.getmtime(filename) < t and not 'processed' in filename:
                 write_and_insert_processed_data(filename, root_dirc)
                 raw_filename = os.path.join(root_dirc,"raw",file)
                 os.rename(filename, raw_filename)

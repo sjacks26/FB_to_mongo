@@ -39,10 +39,10 @@ def generate_candidate_names_dict():
             except ValueError:
                 with open(f, 'r', encoding='latin-1') as i:
                     page_file_contents = json.load(i)
-                key_id = resolve_key_id(page_file_contents)
-                candidate_names[int(page_file_contents[key_id])] = page_file_contents['name']
-                write_line = '{0}: {1}\n'.format(int(page_file_contents[key_id]), page_file_contents['name'])
-                o.write(write_line)
+            key_id = resolve_key_id(page_file_contents)
+            candidate_names[int(page_file_contents[key_id])] = page_file_contents['name']
+            write_line = '{0}: {1}\n'.format(int(page_file_contents[key_id]), page_file_contents['name'])
+            o.write(write_line)
 
 
 generate_candidate_names_dict()

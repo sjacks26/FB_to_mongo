@@ -20,8 +20,8 @@ It takes processed data and does the following:
     * Enter the credentials for Mongo into mongo_auth. If your instance of mongo is not password-protected, change "AUTH" to False.
     * Enter the name you want for the Mongo DB into mongo_auth. FB_to_mongo will automatically create collection names that will live inside the DB you name here.
 4) Run `create_candidate_info_json.py`
-5) Check the file named in candidate_info_json_file in `config.py`. Make any chances as appropriate. The string that appears after the colon in each line will be the value for a field called "name" in the documents in each collection.
-6) Run `FB_data_parsing.py`. This code is meant to run perpetually. When it finishes processing data, it will sleep for one hour before looking for new data to process.
+5) Check the file named in candidate_info_json_file in `config.py`. Make any changes as appropriate. The string that appears after the colon in each line will be the value for a field called "name" in the documents in each collection.
+6) Run the code using `sudo python3 FB_data_parsing.py >> insert.log 2>&1 &`. This code is meant to run perpetually. When it finishes processing data, it will sleep for one hour before looking for new data to process.
 
 
 ## Requirements

@@ -27,6 +27,20 @@ db = mongoClient[cfg.mongo_auth['db_name']]
 base_dirc = cfg.base_dirc
 
 
+def resolve_key_id(data):
+    """
+    For some reason, some FB data uses "page_id" and some uses "id" for the id number for the page it comes from.
+     This function prevents errors stemming from this.
+    """
+    key_id = ''
+    keys = list(data.keys())
+    if "id" in keys:
+        key_id = "id"
+    elif "page_id" in keys:
+        key_id = "page_id"
+    return key_id
+
+
 def get_candidate_names():
     candidate_info_json_file = cfg.candidate_info_json_file
     candidate_names = {}
@@ -46,8 +60,9 @@ def parse_page(self, filename):
     page_data = []
     ts_from_filename = ' '.join([filename.split("_")[0], filename.split("_")[1].replace("-", ":")])
     tzinfos = {"UTC": +00000}
+    key_id = resolve_key_id(data)
     good_json = {
-        'page_id': int(data['id']),         # This gives a unique integer we can index on
+        'page_id': int(data[key_id]),         # This gives a unique integer we can index on
         'user_name': data['username'],
         'name': data['name'],
         'page_link': data['link'],
@@ -62,12 +77,13 @@ def parse_page(self, filename):
 def parse_post(self):
     self = self.replace('\n', ' ')
     data = json.loads(self)
-    cand_id = int(data['id'].split('_')[0])
+    key_id = resolve_key_id(data)
+    cand_id = int(data[key_id].split('_')[0])
     post_data = []
     good_json = {
         'candidate_name': candidate_names[cand_id],
-        'post_id': data['id'],
-        'post_id_int': int(data['id'].split('_')[1]),         # This gives a unique integer we can index on
+        'post_id': data[key_id],
+        'post_id_int': int(data[key_id].split('_')[1]),         # This gives a unique integer we can index on
         'created_time': data['created_time'],
         'created_ts': parse(data['created_time']),
         'message_text': data['message'] if 'message' in data else '',
@@ -88,11 +104,12 @@ def parse_comments(self, filename):
     tzinfos = {"UTC": +00000}
     comment_list = []
     candidate_name = candidate_names[int(filename.split('_')[2])]
+    key_id = resolve_key_id(data)
     for c in data['data']:
         good_c = {
-            'comment_id': c['id'],
-            'post_id': int(c['id'].split('_')[0]),
-            'comment_id_int': int(c['id'].split('_')[1]),         # This gives a unique integer we can index on
+            'comment_id': c[key_id],
+            'post_id': int(c[key_id].split('_')[0]),
+            'comment_id_int': int(c[key_id].split('_')[1]),         # This gives a unique integer we can index on
             'candidate_name': candidate_name,
             'comment_like_count': c['like_count'] if 'like_count' in c else 0,
             'comment_text': c['message'],
@@ -111,11 +128,12 @@ def parse_replies(self, filename):
     tzinfos = {"UTC": +00000}
     replies_list = []
     reply_to = '_'.join(filename.split('_')[2:4])
+    key_id = resolve_key_id(data)
     for r in data['data']:
         good_r = {
-            'comment_id': r['id'],
-            'post_id': int(r['id'].split('_')[0]),
-            'comment_id_int': int(r['id'].split('_')[1]),         # This gives a unique integer we can index on
+            'comment_id': r[key_id],
+            'post_id': int(r[key_id].split('_')[0]),
+            'comment_id_int': int(r[key_id].split('_')[1]),         # This gives a unique integer we can index on
             #'candidate_name': ,                        # I'm not sure what the best way is to get the candidate name for this
             'reply_to': reply_to,
             'comment_like_count': r['like_count'] if 'like_count' in r else 0,
@@ -218,7 +236,7 @@ def process(root_dirc):
         for file in files:
             filename = os.path.join(root,file)
             t = time.time() - 30 * 60
-            if os.path.getatime(filename) < t:
+            if os.path.getatime(filename) < t and not 'processed' in filename:
                 write_and_insert_processed_data(filename)
                 raw_filename = os.path.join(root_dirc,"raw",file)
                 os.rename(filename, raw_filename)

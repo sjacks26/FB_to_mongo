@@ -214,9 +214,10 @@ def insert_comments(processed_data, insertDB):
                                        'updated_ts': comment['updated_ts']}}, upsert=True)
 
 
-def write_and_insert_processed_data(file):
+def write_and_insert_processed_data(file, root_dirc):
     processed_data, insertDB, insert = parse_file(file)
     new_filename = file.replace(".json", "_processed.json")
+    new_filename = new_filename.replace(os.path.dirname(file), os.path.join(root_dirc, "processed"))
     with open(new_filename, 'w') as o:
         for l in processed_data:
             t = json.dumps(l, default=json_util.default)
@@ -237,7 +238,7 @@ def process(root_dirc):
             filename = os.path.join(root,file)
             t = time.time() - 30 * 60
             if os.path.getatime(filename) < t and not 'processed' in filename:
-                write_and_insert_processed_data(filename)
+                write_and_insert_processed_data(filename, root_dirc)
                 raw_filename = os.path.join(root_dirc,"raw",file)
                 os.rename(filename, raw_filename)
                
@@ -245,6 +246,7 @@ def process(root_dirc):
 def run_timeline(base_dirc):
     while True:
         os.makedirs(os.path.join(base_dirc,"raw"), exist_ok=True)
+        os.makedirs(os.path.join(base_dirc, "processed"), exist_ok=True)
         process(base_dirc)
         print('Job completed. Resuming in an hour.')
         time.sleep(60 * 60)
